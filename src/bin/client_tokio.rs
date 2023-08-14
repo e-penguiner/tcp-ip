@@ -1,11 +1,13 @@
-use std::io::{Read, Write};
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpStream;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let port_number = 12345;
     let server_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port_number);
 
-    let mut stream = match TcpStream::connect(server_address) {
+    let mut stream = match TcpStream::connect(server_address).await {
         Ok(stream) => stream,
         Err(_) => {
             println!("\nConnection Failed \n");
@@ -14,7 +16,7 @@ fn main() {
     };
 
     let message = "Hello from client";
-    match stream.write_all(message.as_bytes()) {
+    match stream.write_all(message.as_bytes()).await {
         Ok(_) => println!("Message sent to server"),
         Err(e) => {
             eprintln!("Error sending message: {}", e);
@@ -23,7 +25,7 @@ fn main() {
     }
 
     let mut buffer = [0u8; 1024];
-    match stream.read(&mut buffer) {
+    match stream.read(&mut buffer).await {
         Ok(bytes_read) => {
             let received_message = String::from_utf8_lossy(&buffer[..bytes_read]);
             println!("Received message is \"{}\"", received_message);
